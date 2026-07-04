@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AAPG Public Service — Expense Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- OTP Modal -->
+  <div class="modal-overlay" id="otp-modal" style="display:none;">
+    <div class="modal-box otp-modal-box">
+      <div class="otp-icon">📨</div>
+      <h3 class="otp-title">Verify Your Identity</h3>
+      <p class="otp-sub">An OTP has been sent to your email</p>
+      <p id="otp-email-display" class="otp-email"></p>
+      <div class="otp-inputs">
+        <input class="otp-box" id="otp-box-1" maxlength="1" type="text" oninput="otpNext(this,1)"
+          onkeydown="otpBack(event,1)" />
+        <input class="otp-box" id="otp-box-2" maxlength="1" type="text" oninput="otpNext(this,2)"
+          onkeydown="otpBack(event,2)" />
+        <input class="otp-box" id="otp-box-3" maxlength="1" type="text" oninput="otpNext(this,3)"
+          onkeydown="otpBack(event,3)" />
+        <input class="otp-box" id="otp-box-4" maxlength="1" type="text" oninput="otpNext(this,4)"
+          onkeydown="otpBack(event,4)" />
+        <input class="otp-box" id="otp-box-5" maxlength="1" type="text" oninput="otpNext(this,5)"
+          onkeydown="otpBack(event,5)" />
+        <input class="otp-box" id="otp-box-6" maxlength="1" type="text" oninput="otpNext(this,6)"
+          onkeydown="otpBack(event,6)" />
+      </div>
+      <div class="auth-error" id="otp-error" style="display:none;"></div>
+      <div class="otp-demo-banner" id="otp-display-banner">
+        🔑 Demo OTP: <strong id="otp-demo-value">------</strong>
+      </div>
+      <button class="btn-green" onclick="verifyOTP()">✅ Verify OTP</button>
+      <p class="otp-resend">Didn't receive? <span onclick="resendOTP()">Resend OTP</span></p>
+      <p class="otp-cancel" onclick="cancelOTP()">← Cancel</p>
+    </div>
+  </div>
+
+  <!-- Auth Overlay -->
+  <div id="auth-overlay" style="display:flex;">
+
+    <!-- Sign In -->
+    <div class="auth-screen active" id="screen-signin">
+      <div class="auth-box">
+        <div class="auth-logo">
+          <div class="logo-icon logo-icon--lg">AAPG</div>
+          <h2>Public Service</h2>
+          <p class="auth-logo-tag">BY AAPG</p>
+          <p>Expense Tracker</p>
+        </div>
+        <h3 class="auth-title">Welcome Back</h3>
+        <p class="auth-sub">Sign in to your account to continue</p>
+        <div class="login-toggle-wrap">
+          <button class="login-toggle-btn active" id="btn-login-email" onclick="setLoginMode('email')">📧 Email
+            Login</button>
+          <button class="login-toggle-btn" id="btn-login-otp" onclick="setLoginMode('otp')">📱 OTP Login</button>
+        </div>
+        <div id="login-email-fields">
+          <div class="form-group">
+            <label>Username or Email</label>
+            <input id="si-user" type="text" placeholder="Enter username or email"
+              onkeydown="if(event.key==='Enter')document.getElementById('si-pass').focus()" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input id="si-pass" type="password" placeholder="Enter password"
+              onkeydown="if(event.key==='Enter')doSignIn()" />
+          </div>
+          <div class="auth-error" id="si-error" style="display:none;"></div>
+          <button class="btn-green" onclick="doSignIn()">🔓 Sign In</button>
+          <p class="auth-switch" style="margin-top:12px;">
+            Have a Passkey? <span onclick="loginWithPasskey()">Login with Passkey</span>
+          </p>
+        </div>
+        <div id="login-otp-fields" style="display:none;">
+          <div class="form-group">
+            <label>Registered Email Address</label>
+            <input id="si-otp-email" type="email" placeholder="your@email.com"
+              onkeydown="if(event.key==='Enter')doOTPLogin()" />
+          </div>
+          <div class="auth-error" id="si-otp-error" style="display:none;"></div>
+          <button class="btn-green" onclick="doOTPLogin()">📨 Send OTP to Email</button>
+        </div>
+        <p class="auth-switch">Don't have an account? <span onclick="showAuthScreen('signup')">Sign Up</span></p>
+      </div>
+    </div>
+
+    <!-- Sign Up -->
+    <div class="auth-screen" id="screen-signup">
+      <div class="auth-box">
+        <div class="auth-logo">
+          <div class="logo-icon logo-icon--lg">AAPG</div>
+          <h2>Public Service</h2>
+          <p class="auth-logo-tag">BY AAPG</p>
+          <p>Expense Tracker</p>
+        </div>
+        <h3 class="auth-title">Create Account</h3>
+        <p class="auth-sub">Join us and start tracking your expenses</p>
+        <div class="row2">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input id="su-name" type="text" placeholder="Your full name"
+              onkeydown="if(event.key==='Enter')document.getElementById('su-username').focus()" />
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input id="su-username" type="text" placeholder="@username"
+              onkeydown="if(event.key==='Enter')document.getElementById('su-email').focus()" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input id="su-email" type="email" placeholder="your@email.com"
+            onkeydown="if(event.key==='Enter')document.getElementById('su-phone').focus()" />
+        </div>
+        <div class="form-group">
+          <label>Mobile Number <small>(for SMS reminders)</small></label>
+          <input id="su-phone" type="tel" placeholder="+91 98765 43210"
+            onkeydown="if(event.key==='Enter')document.getElementById('su-pass').focus()" />
+        </div>
+        <div class="row2">
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="su-pass" placeholder="Create password" autocomplete="new-password">
+            <div class="password-requirements" id="su-pass-requirements"></div>
+
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input id="su-confirm" type="password" placeholder="Repeat password"
+              onkeydown="if(event.key==='Enter')doSignUp()" />
+          </div>
+        </div>
+        <div class="auth-error" id="su-error" style="display:none;"></div>
+        <button class="btn-green" onclick="doSignUp()">✅ Create Account</button>
+        <p class="auth-switch">Already have an account? <span onclick="showAuthScreen('signin')">Sign In</span></p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Main App -->
+  <div id="app" style="display:none;">
+
+    <nav>
+      <div class="logo">
+        <div class="logo-icon logo-icon--sm">AAPG</div>
+        <div>
+          <div class="logo-name">Public Service</div>
+          <div class="logo-sub">BY AAPG</div>
+        </div>
+      </div>
+      <a class="nav-btn active" id="nav-dashboard" onclick="showPage('dashboard')">🏠 Dashboard</a>
+      <a class="nav-btn" id="nav-calendar" onclick="showPage('calendar')">📅 Calendar</a>
+      <a class="nav-btn" id="nav-stats" onclick="showPage('stats')">📊 Stats</a>
+      <a class="nav-btn" id="nav-payments" onclick="showPage('payments')">💳 Payments</a>
+      <a class="nav-btn" id="nav-calculator" onclick="showPage('calculator')">🧮 Calculator</a>
+      <a class="nav-btn" id="nav-feedback" onclick="showPage('feedback')">💬 Feedback</a>
+      <a class="nav-btn" id="nav-accounts" onclick="showPage('accounts')">👤 Accounts</a>
+           <a class="nav-btn" id="nav-contact" onclick="showPage('contact')">📬 Contact</a>
+      <a class="nav-btn" onclick="openModal('help-modal')">❓ Help</a>
+      <a class="nav-btn" id="nav-more" onclick="showPage('more')">⚙️ More</a>
+      <a class="nav-btn" id="theme-toggle" onclick="toggleTheme()">🌙</a>
+      
+      <div class="nav-user-badge" id="nav-user-badge" onclick="showPage('accounts')">
+        <div class="nav-avatar" id="nav-avatar">A</div>
+        <span id="nav-username-display">User</span>
+      </div>
+    </nav>
+
+    <!-- Night Reminder Banner -->
+    <div id="night-notification" class="notif-banner" style="display:none;">
+      <span id="notif-message"></span>
+      <button onclick="document.getElementById('night-notification').style.display='none'">✕</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-header">
+        <div class="dash-header-icon">₹</div>
+        <div>
+          <h1 class="dash-title">Expense Tracker</h1>
+          <p class="dash-sub">Welcome, <span id="dash-welcome-name">User</span> 👋</p>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="section-title">➕ Add New Expense</div>
+          <div class="form-group">
+            <label>Description</label>
+            <input id="exp-desc" type="text" placeholder="Coffee, Lunch, Bus fare..." oninput="capitalizeFirst(this)"
+              onkeydown="if(event.key==='Enter')document.getElementById('exp-amount').focus()" />
+          </div>
+          <div class="row2">
+            <div class="form-group">
+              <label>Amount (₹)</label>
+              <input id="exp-amount" type="number" min="0" step="0.01" placeholder="0.00"
+                onkeydown="if(event.key==='Enter')document.getElementById('exp-cat').focus()" />
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="exp-cat" onkeydown="if(event.key==='Enter')document.getElementById('exp-date').focus()">
+                <option value="Food">🍽 Food</option>
+                <option value="Transport">🚌 Transport</option>
+                <option value="Shopping">🛒 Shopping</option>
+                <option value="Entertainment">🎬 Entertainment</option>
+                <option value="Bills">💡 Bills</option>
+                <option value="Health">🏥 Health</option>
+                <option value="Education">📚 Education</option>
+                <option value="Rent">🏠 Rent</option>
+                <option value="Groceries">🛍 Groceries</option>
+                <option value="Travel">✈ Travel</option>
+                <option value="Fuel">⛽ Fuel</option>
+                <option value="Investment">📈 Investment</option>
+                <option value="Other">📦 Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input id="exp-date" type="date" onkeydown="if(event.key==='Enter')addExpense()" />
+          </div>
+          <button class="btn-green" onclick="addExpense()">+ Add Expense</button>
+        </div>
+        <div class="card">
+          <div class="section-title">📈 Spending by Category</div>
+          <div id="cat-chart-container" class="cat-chart-wrap">
+            <canvas id="dashCatChart" style="display:none;"></canvas>
+            <p class="empty-msg" id="no-cat-msg">No expenses yet</p>
+          </div>
+          <div id="cat-legend"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">📅 Last 7 Days</div>
+          <div id="last7days"></div>
+        </div>
+      </div>
+      <div class="card recent-section">
+        <div class="recent-header">
+          <h3>Recent Expenses</h3>
+          <span class="total-badge" id="total-display">Total ₹0.00</span>
+        </div>
+        <div id="expense-list">
+          <p class="empty-msg">No expenses to show</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="page" id="page-stats">
+      <h1 class="page-title">📊 Analytics &amp; Stats</h1>
+      <div class="card" style="margin-bottom:20px; padding:16px 24px;">
+        <div class="stats-filter-row">
+          <label style="font-weight:700; font-size:0.9rem; white-space:nowrap;">📊 View Period:</label>
+          <select id="stats-period" onchange="onStatsPeriodChange()" style="width:auto; min-width:160px;">
+            <option value="weekly">Weekly</option>
+            <option value="monthly" selected>Monthly</option>
+            <option value="annually">Annually</option>
+            <option value="custom">Custom Period</option>
+          </select>
+          <div id="stats-custom-range" style="display:none; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input id="stats-from" type="date" onchange="renderStats()" style="width:auto;" />
+            <span>to</span>
+            <input id="stats-to" type="date" onchange="renderStats()" style="width:auto;" />
+          </div>
+        </div>
+      </div>
+      <div class="stat-cards">
+        <div class="stat-card green">
+          <p>Total Expenses</p>
+          <h2 id="stat-total">₹0.00</h2>
+        </div>
+        <div class="stat-card blue">
+          <p>Average per Category</p>
+          <h2 id="stat-avg">₹0.00</h2>
+        </div>
+        <div class="stat-card orange">
+          <p>Top Category</p>
+          <h2 id="stat-top-cat">—</h2><small id="stat-top-amt"></small>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="card">
+          <h3 class="card-heading">🥧 Spending by Category</h3>
+          <div class="chart-wrap" style="height:280px; position:relative;"><canvas id="statsPieChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3 class="card-heading" id="bar-chart-title">Weekly Spending</h3>
+          <div class="chart-wrap" style="height:280px; position:relative;"><canvas id="statsBarChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <h3 class="card-heading">📈 Monthly Trend (All Year)</h3>
+        <div class="chart-wrap" style="height:220px; position:relative;"><canvas id="statsLineChart"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <h3 class="card-heading" id="month-compare-title">📊 Month-by-Month Comparison</h3>
+        <div class="chart-wrap" style="height:220px; position:relative;"><canvas id="statsMonthCompareChart"></canvas>
+        </div>
+      </div>
+      <div class="cat-summary" id="cat-summary-cards"></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="page" id="page-calendar">
+      <h1 class="page-title">📅 Calendar</h1>
+      <div class="cal-layout">
+        <div class="card">
+          <div class="cal-header">
+            <h2 id="cal-title">June 2026</h2>
+            <div style="display:flex; gap:6px;">
+              <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+              <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
+          </div>
+          <div class="cal-weekdays">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+          </div>
+          <div class="cal-days" id="cal-grid"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-heading">All Records This Month</h3>
+          <div id="cal-records">
+            <p class="empty-msg">No records yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="page-payments">
+      <h1 class="page-title">💳 Payment Tracking</h1>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="pay-stats-row">
+          <div class="stat-card green" style="flex:1;">
+            <p>Total Paid</p>
+            <h2 id="pay-stat-total">₹0</h2>
+          </div>
+          <div class="stat-card blue" style="flex:1;">
+            <p>Transactions</p>
+            <h2 id="pay-stat-count">0</h2>
+          </div>
+          <div class="stat-card orange" style="flex:1;">
+            <p>Top App</p>
+            <h2 id="pay-stat-app">—</h2>
+          </div>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <select id="pay-filter-app" onchange="renderPayments()" style="width:auto; min-width:160px;">
+            <option value="">All Payment Apps</option>
+            <option value="GPay">🟢 Google Pay</option>
+            <option value="PhonePe">🟣 PhonePe</option>
+            <option value="Paytm">🔵 Paytm</option>
+            <option value="BHIM">🇮🇳 BHIM UPI</option>
+            <option value="AmazonPay">🟠 Amazon Pay</option>
+            <option value="NetBanking">🏦 Net Banking</option>
+            <option value="Cash">💵 Cash</option>
+            <option value="Card">💳 Card</option>
+          </select>
+          <button class="btn-green" style="width:auto; padding:10px 20px;"
+            onclick="document.getElementById('payment-modal').style.display='flex'">💳 Track New Payment</button>
+        </div>
+      </div>
+      <div id="payment-list"></div>
+    </div>
+
+    <!-- CALCULATOR -->
+    <div class="page" id="page-calculator">
+      <h1 class="page-title">🧮 Calculator</h1>
+      <div class="card calc-card">
+        <div class="calc-display" id="calc-display">0</div>
+        <div class="calc-expr" id="calc-expr"></div>
+        <div class="calc-grid">
+          <button onclick="calcNum('7')">7</button>
+          <button onclick="calcNum('8')">8</button>
+          <button onclick="calcNum('9')">9</button>
+          <button class="calc-op" onclick="calcOp('/')">÷</button>
+          <button onclick="calcNum('4')">4</button>
+          <button onclick="calcNum('5')">5</button>
+          <button onclick="calcNum('6')">6</button>
+          <button class="calc-op" onclick="calcOp('*')">×</button>
+          <button onclick="calcNum('1')">1</button>
+          <button onclick="calcNum('2')">2</button>
+          <button onclick="calcNum('3')">3</button>
+          <button class="calc-op" onclick="calcOp('-')">−</button>
+          <button onclick="calcNum('0')" style="grid-column:span 2;">0</button>
+          <button onclick="calcNum('.')">.</button>
+          <button class="calc-op" onclick="calcOp('+')">+</button>
+          <button class="calc-clear" onclick="calcClear()" style="grid-column:span 2;">C</button>
+          <button class="calc-back" onclick="calcBack()">⌫</button>
+          <button class="calc-eq" onclick="calcEqual()">=</button>
+        </div>
+        <div class="calc-history-wrap">
+          <p class="calc-history-label">History</p>
+          <div id="calc-history">
+            <p class="empty-msg" style="padding:10px 0;">No calculations yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="page" id="page-feedback">
+      <h1 class="page-title">💬 Feedback &amp; Suggestions</h1>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="feedback-summary">
+          <div class="avg-score" id="avg-rating">0</div>
+          <div>
+            <div class="avg-stars" id="avg-stars">☆☆☆☆☆</div>
+            <p id="review-count" class="review-count-text">Based on 0 reviews</p>
+          </div>
+        </div>
+        <div id="rating-bars" style="margin-top:16px;"></div>
+        <div id="reviews-list" style="margin-top:16px;">
+          <p class="empty-msg">No reviews yet</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-heading">Leave a Review</h3>
+        <div class="form-group">
+          <label>Name</label>
+          <input id="fb-name" type="text" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label>Email <small>(optional)</small></label>
+          <input id="fb-email" type="email" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Your Rating</label>
+          <div class="rating-stars">
+            <span class="star" onclick="setRating(1)">★</span>
+            <span class="star" onclick="setRating(2)">★</span>
+            <span class="star" onclick="setRating(3)">★</span>
+            <span class="star" onclick="setRating(4)">★</span>
+            <span class="star" onclick="setRating(5)">★</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Your Feedback</label>
+          <textarea id="fb-message" placeholder="Tell us what you think..."></textarea>
+        </div>
+        <button class="btn-green" onclick="submitFeedback()">📤 Submit Feedback</button>
+      </div>
+    </div>
+
+    <!-- ACCOUNTS -->
+       <div class="page" id="page-accounts">
+      <h1 class="page-title">👤 Accounts &amp; Profile</h1>
+      <div class="card" style="margin-bottom:20px;">
+        <h3 class="card-heading">Your Profile</h3>
+        <div class="profile-row">
+          <div id="profile-avatar" class="profile-avatar">A</div>
+          <div>
+            <p class="profile-label">Full Name</p>
+            <h3 id="profile-fullname" class="profile-name">User Name</h3>
+            <p id="profile-email" class="profile-detail">user@email.com</p>
+            <p id="profile-phone" class="profile-detail">+91 98765 43210</p>
+          </div>
+        </div>
+        <button class="btn-outline" style="margin-bottom:10px;" onclick="openSwitchUser()">👥 Switch Account</button>
+        <button class="btn-outline" onclick="signOut()">🚪 Sign Out</button>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <h3 class="card-heading">📊 Account Statistics</h3>
+        <div class="stat-cards">
+          <div class="stat-card green">
+            <p>Total Accounts</p>
+            <h2 id="acc-total">0</h2>
+          </div>
+          <div class="stat-card blue">
+            <p>Active Accounts</p>
+            <h2 id="acc-active">0</h2>
+          </div>
+          <div class="stat-card orange">
+            <p>Admin Accounts</p>
+            <h2 id="acc-admins">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-heading">📋 All Registered Accounts</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="accounts-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+     
+     
+  <!-- CONTACT -->
+  <div class="page" id="page-contact">
+    <h1 class="page-title">📬 Contact Us</h1>
+    <div class="card">
+      <h3 class="card-heading">Get in Touch</h3>
+      <div class="row2">
+        <div>
+          <p class="contact-label">Email</p>
+          <p class="contact-val">support@aapg.org</p>
+        </div>
+        <div>
+          <p class="contact-label">Phone</p>
+          <p class="contact-val">+91 9876 543 210</p>
+        </div>
+      </div>
+      <div class="row2" style="margin-top:20px;">
+        <div>
+          <p class="contact-label">Address</p>
+          <p class="contact-val">AAPG Headquarters<br />Bhubaneswar, Odisha</p>
+        </div>
+        <div>
+          <p class="contact-label">Hours</p>
+          <p class="contact-val">Mon – Fri: 9AM – 6PM<br />Sat – Sun: Closed</p>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3 class="card-heading">Send us a Message</h3>
+      <div class="row2">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input id="ct-name" type="text" placeholder="Your full name" />
+        </div>
+        <div class="form-group">
+          <label>Your Email</label>
+          <input id="ct-email" type="email" placeholder="your@email.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input id="ct-subject" type="text" placeholder="What's this about?" />
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="ct-message" placeholder="Write your message..."></textarea>
+      </div>
+      <button class="btn-green" onclick="submitContact()">📤 Send Message</button>
+    </div>
+  </div>
+
+  </div><!-- end #app -->
+
+  <!-- Switch Account Modal -->
+
+
+<!-- PREMIUM MORE PAGE -->
+<div class="page" id="page-more">
+    <h1 class="page-title">⚙️ Tools & Settings</h1>
+    <div class="more-grid">
+        <div class="more-card" onclick="openModal('export-modal')">
+            <div class="more-card-icon">📊</div>
+            <h3>Export Report</h3>
+            <p>Download data as Excel, PDF, Word, or CSV</p>
+        </div>
+        <div class="more-card" onclick="openModal('backup-modal')">
+            <div class="more-card-icon">💾</div>
+            <h3>Backup & Restore</h3>
+            <p>Save your data safely or restore from a file</p>
+        </div>
+        <div class="more-card" onclick="openModal('passkey-modal')">
+            <div class="more-card-icon">🔑</div>
+            <h3>Set Quick Passkey</h3>
+            <p>Create your own code to login without OTP</p>
+        </div>
+        <div class="more-card" onclick="shareApp()">
+            <div class="more-card-icon">🚀</div>
+            <h3>Recommend App</h3>
+            <p>Share via WhatsApp, Message, Telegram, etc.</p>
+        </div>
+    </div>
+</div>
+
+<!-- PASSKEY MODAL (USER DEFINED) -->
+<div class="modal-overlay" id="passkey-modal" style="display:none;">
+    <div class="modal-box" style="max-width:400px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 class="card-heading" style="margin:0;">🔑 Set Quick Passkey</h3>
+            <button onclick="closeModal('passkey-modal')" class="modal-close-btn">✕</button>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">Create your own secret code. Use this on the login screen to skip the OTP step.</p>
+        <div class="form-group">
+            <label>Enter New Passkey</label>
+            <input type="text" id="new-passkey-input" placeholder="e.g., 1234, mycode, etc." maxlength="20" style="text-align:center; font-size:1.2rem; letter-spacing:4px; font-weight:700;">
+        </div>
+        <button class="btn-green" onclick="savePasskey()">💾 Save Passkey</button>
+        <div style="text-align:center; margin-top:14px;">
+            <button class="btn-outline" style="color:#ef4444; border-color:#ef4444;" onclick="removePasskey()">Remove Passkey</button>
+        </div>
+    </div>
+</div>
+
+  <!-- PASSKEY MODAL -->
+  <div class="modal-overlay" id="passkey-modal" style="display:none;">
+    <div class="modal-box" style="max-width:400px; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">🔑 Passkey Setup</h3>
+        <button onclick="closeModal('passkey-modal')" class="modal-close-btn">✕</button>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Use this code on the login screen to
+        bypass OTP and login directly.</p>
+      <div class="passkey-display">
+        <div class="passkey-code" id="modal-passkey-code">------</div>
+      </div>
+      <button class="btn-green" style="margin-top:16px;" onclick="generatePasskey()">🔄 Generate New Passkey</button>
+    </div>
+  </div>
+
+
+  <div class="modal-overlay" id="switch-modal" style="display:none;">
+    <div class="modal-box" style="max-width:420px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">👥 Switch Account</h3>
+        <button onclick="closeSwitchModal()" class="modal-close-btn">✕</button>
+      </div>
+      <div id="modal-user-list"></div>
+    </div>
+  </div>
+
+  <!-- Add Expense via Calendar Modal -->
+  <div class="modal-overlay" id="cal-add-modal" style="display:none;">
+    <div class="modal-box" style="max-width:400px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">➕ Add Expense for <span id="cal-modal-date-label"></span></h3>
+        <button onclick="document.getElementById('cal-add-modal').style.display='none'"
+          class="modal-close-btn">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input id="cal-exp-desc" type="text" placeholder="Coffee, Lunch, Bus fare..." oninput="capitalizeFirst(this)" />
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input id="cal-exp-amount" type="number" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="cal-exp-cat">
+            <option value="Food">🍽 Food</option>
+            <option value="Transport">🚌 Transport</option>
+            <option value="Shopping">🛒 Shopping</option>
+            <option value="Entertainment">🎬 Entertainment</option>
+            <option value="Bills">💡 Bills</option>
+            <option value="Health">🏥 Health</option>
+            <option value="Education">📚 Education</option>
+            <option value="Rent">🏠 Rent</option>
+            <option value="Groceries">🛍 Groceries</option>
+            <option value="Travel">✈ Travel</option>
+            <option value="Fuel">⛽ Fuel</option>
+            <option value="Investment">📈 Investment</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+      </div>
+      <input id="cal-exp-date" type="hidden" />
+      <div id="cal-day-expenses" style="margin-top:8px;"></div>
+      <button class="btn-green" onclick="addExpenseFromCalendar()" style="margin-top:12px;">+ Add Expense</button>
+    </div>
+  </div>
+
+  <!-- Track Payment Modal -->
+  <div class="modal-overlay" id="payment-modal" style="display:none;">
+    <div class="modal-box" style="max-width:480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">💳 Track Payment</h3>
+        <button onclick="document.getElementById('payment-modal').style.display='none'"
+          class="modal-close-btn">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Payment App / Method</label>
+        <select id="pay-app">
+          <option value="GPay">🟢 Google Pay</option>
+          <option value="PhonePe">🟣 PhonePe</option>
+          <option value="Paytm">🔵 Paytm</option>
+          <option value="BHIM">🇮🇳 BHIM UPI</option>
+          <option value="AmazonPay">🟠 Amazon Pay</option>
+          <option value="NetBanking">🏦 Net Banking</option>
+          <option value="Cash">💵 Cash</option>
+          <option value="Card">💳 Debit/Credit Card</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>⚡ Smart UPI Reader <small>(Paste bank SMS to auto-fill)</small></label>
+        <textarea id="pay-sms-parser"
+          placeholder="Paste your UPI bank SMS here...&#10;e.g., Rs 500.00 debited from A/C XX1234 for UPI Txn 4321567890 to Swiggy@ybl..."
+          style="min-height:60px; font-size:0.82rem;"></textarea>
+        <button type="button" class="btn-green" style="margin-top:6px; padding:8px; font-size:0.82rem;"
+          onclick="parseUPISMS()">🪄 Extract Details from SMS</button>
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>Transaction ID <small>(optional)</small></label>
+          <input id="pay-txn" type="text" placeholder="UPI Ref / TXN ID" />
+        </div>
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description <small>(who/what you paid)</small></label>
+        <input id="pay-desc" type="text" placeholder="e.g. Grocery at D-Mart" oninput="capitalizeFirst(this)" />
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="pay-cat">
+            <option value="Food">🍽 Food</option>
+            <option value="Transport">🚌 Transport</option>
+            <option value="Shopping">🛒 Shopping</option>
+            <option value="Entertainment">🎬 Entertainment</option>
+            <option value="Bills">💡 Bills</option>
+            <option value="Health">🏥 Health</option>
+            <option value="Education">📚 Education</option>
+            <option value="Rent">🏠 Rent</option>
+            <option value="Groceries">🛍 Groceries</option>
+            <option value="Travel">✈ Travel</option>
+            <option value="Fuel">⛽ Fuel</option>
+            <option value="Investment">📈 Investment</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input id="pay-date" type="date" />
+        </div>
+      </div>
+      <button class="btn-green" onclick="addPayment()">💳 Save Payment Record</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="export-modal" style="display:none;">
+    <div class="modal-box" style="max-width:480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">📊 Export Report</h3>
+        <button onclick="closeModal('export-modal')" class="modal-close-btn">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Select Period</label>
+        <select id="export-period">
+          <option value="weekly">This Week</option>
+          <option value="monthly" selected>This Month</option>
+          <option value="annually">This Year</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Download As</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+          <button class="btn-green" onclick="exportData('excel')" style="background:#217346;">📉 Excel</button>
+          <button class="btn-green" onclick="exportData('pdf')" style="background:#ef4444;">📄 PDF</button>
+          <button class="btn-green" onclick="exportData('word')" style="background:#2b579a;">📝 Word</button>
+          <button class="btn-green" onclick="exportData('csv')" style="background:#f59e0b; color:#000;">📊 CSV (Google
+            Sheets)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup Modal -->
+  <div class="modal-overlay" id="backup-modal" style="display:none;">
+    <div class="modal-box" style="max-width:420px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">💾 Data Backup</h3>
+        <button onclick="closeModal('backup-modal')" class="modal-close-btn">✕</button>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">Download your data. If you clear your
+        browser, you can restore it using this file.</p>
+      <button class="btn-green" onclick="downloadBackup()" style="margin-bottom:10px;">⬇️ Download Backup File</button>
+      <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+      <h4 style="font-size:0.9rem; margin-bottom:8px;">Restore from Backup</h4>
+      <input type="file" id="restore-file-input" accept=".json" style="font-size:0.85rem; margin-bottom:10px;">
+      <button class="btn-outline" onclick="restoreBackup()">⬆️ Restore Data</button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="help-modal" style="display:none;">
+    <div class="modal-box" style="max-width:600px; max-height:85vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">📖 User Manual & Help</h3>
+        <button onclick="closeModal('help-modal')" class="modal-close-btn">✕</button>
+      </div>
+      <div style="font-size:0.88rem; line-height:1.6; color:var(--text-muted);">
+        <h4 style="color:var(--text); margin-bottom:6px;">🏠 1. Dashboard</h4>
+        <p>Log daily expenses using the "Add New Expense" card. Select a category, enter the amount, and click Add.</p>
+        <h4 style="color:var(--text); margin:16px 0 6px;">📅 2. Calendar</h4>
+        <p>View expenses by date. Click any date to add an expense directly for that day.</p>
+        <h4 style="color:var(--text); margin:16px 0 6px;">💳 3. Payments & Smart SMS</h4>
+        <p><b>Pro Tip:</b> Paste your bank's UPI SMS into the "Smart UPI Reader" box and click Extract to auto-fill the
+          payment form!</p>
+        <h4 style="color:var(--text); margin:16px 0 6px;">⚙️ 4. More Options</h4>
+        <ul style="padding-left:20px;">
+          <li><b>Export:</b> Download reports as Excel, PDF, Word, or CSV (for Google Sheets).</li>
+          <li><b>Backup:</b> Save your data to a file to prevent data loss.</li>
+        </ul>
+        <h4 style="color:var(--text); margin:16px 0 6px;">🔑 5. Passkey Login</h4>
+        <p>Go to Accounts to generate a 6-digit Passkey. Use it on the login screen for instant access!</p>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
