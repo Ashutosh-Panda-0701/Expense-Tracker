@@ -111,18 +111,15 @@ body.dark-mode #auth-overlay {
     justify-content: center;
     margin-bottom: 10px;
 }
-
 .logo-icon--lg {
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
     flex-direction: column;
     gap: 0;
-    font-size: 0.95rem;
+    font-size: 1.3rem;
     font-weight: 900;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     white-space: nowrap;
-    line-height: 64px;
-    overflow: hidden;
 }
 
 .logo-icon--sm {
