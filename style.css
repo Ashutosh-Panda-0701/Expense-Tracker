@@ -1642,3 +1642,8 @@ body.dark-mode .password-requirements li.valid {
         grid-template-columns: 1fr;
     }
 }
+
+.auth-logo .logo-icon--lg {
+  width: 96px !important;
+  height: 96px !important;
+}
