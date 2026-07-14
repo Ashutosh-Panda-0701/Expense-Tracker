@@ -72,15 +72,10 @@
               onkeydown="if(event.key==='Enter')document.getElementById('si-pass').focus()" />
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <div class="password-input-container">
-              <input id="si-pass" type="password" placeholder="Enter password"
-                onkeydown="if(event.key==='Enter')doSignIn()" />
-              <button type="button" class="password-toggle-btn" onclick="togglePassword('si-pass', this)">
-                <span class="eye-icon">👁️</span>
-              </button>
-            </div>
-          </div>
+  <label>Password</label>
+  <input id="si-pass" type="password" placeholder="Enter password"
+    onkeydown="if(event.key==='Enter')doSignIn()" />
+</div>
           <div class="auth-error" id="si-error" style="display:none;"></div>
           <button class="btn-green" onclick="doSignIn()">🔓 Sign In</button>
           <p class="auth-switch" style="margin-top:12px;">

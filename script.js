@@ -1,17 +1,3 @@
-function togglePassword(inputId, btn) {
-  const input = document.getElementById(inputId);
-  const eyeSpan = btn.querySelector('.eye-icon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    eyeSpan.textContent = '🙈';
-    btn.style.opacity = '1';
-  } else {
-    input.type = 'password';
-    eyeSpan.textContent = '👁️';
-    btn.style.opacity = '0.5';
-  }
-}
-
 // ══════════════════════════════════════════════════════
 //  OTP VERIFICATION
 // ══════════════════════════════════════════════════════
