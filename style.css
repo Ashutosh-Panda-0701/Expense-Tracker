@@ -1647,3 +1647,40 @@ body.dark-mode .password-requirements li.valid {
   width: 64px !important;
   height: 64px !important;
 }
+
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-input-container input {
+  padding-right: 48px !important;
+}
+.password-toggle-btn {
+  position: absolute;
+  right: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  z-index: 2;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+.password-input-container input:focus ~ .password-toggle-btn,
+.password-input-container:hover .password-toggle-btn {
+  opacity: 0.5;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.password-toggle-btn:hover {
+  opacity: 1 !important;
+  background: rgba(34, 197, 94, 0.1);
+}

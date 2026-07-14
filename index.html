@@ -73,8 +73,13 @@
           </div>
           <div class="form-group">
             <label>Password</label>
-            <input id="si-pass" type="password" placeholder="Enter password"
-              onkeydown="if(event.key==='Enter')doSignIn()" />
+            <div class="password-input-container">
+              <input id="si-pass" type="password" placeholder="Enter password"
+                onkeydown="if(event.key==='Enter')doSignIn()" />
+              <button type="button" class="password-toggle-btn" onclick="togglePassword('si-pass', this)">
+                <span class="eye-icon">👁️</span>
+              </button>
+            </div>
           </div>
           <div class="auth-error" id="si-error" style="display:none;"></div>
           <button class="btn-green" onclick="doSignIn()">🔓 Sign In</button>
@@ -167,11 +172,11 @@
       <a class="nav-btn" id="nav-calculator" onclick="showPage('calculator')">🧮 Calculator</a>
       <a class="nav-btn" id="nav-feedback" onclick="showPage('feedback')">💬 Feedback</a>
       <a class="nav-btn" id="nav-accounts" onclick="showPage('accounts')">👤 Accounts</a>
-           <a class="nav-btn" id="nav-contact" onclick="showPage('contact')">📬 Contact</a>
+      <a class="nav-btn" id="nav-contact" onclick="showPage('contact')">📬 Contact</a>
       <a class="nav-btn" onclick="openModal('help-modal')">❓ Help</a>
       <a class="nav-btn" id="nav-more" onclick="showPage('more')">⚙️ More</a>
       <a class="nav-btn" id="theme-toggle" onclick="toggleTheme()">🌙</a>
-      
+
       <div class="nav-user-badge" id="nav-user-badge" onclick="showPage('accounts')">
         <div class="nav-avatar" id="nav-avatar">A</div>
         <span id="nav-username-display">User</span>
@@ -460,7 +465,7 @@
     </div>
 
     <!-- ACCOUNTS -->
-       <div class="page" id="page-accounts">
+    <div class="page" id="page-accounts">
       <h1 class="page-title">👤 Accounts &amp; Profile</h1>
       <div class="card" style="margin-bottom:20px;">
         <h3 class="card-heading">Your Profile</h3>
@@ -513,108 +518,111 @@
         </div>
       </div>
     </div>
-     
-     
-  <!-- CONTACT -->
-  <div class="page" id="page-contact">
-    <h1 class="page-title">📬 Contact Us</h1>
-    <div class="card">
-      <h3 class="card-heading">Get in Touch</h3>
-      <div class="row2">
-        <div>
-          <p class="contact-label">Email</p>
-          <p class="contact-val">support@aapg.org</p>
+
+
+    <!-- CONTACT -->
+    <div class="page" id="page-contact">
+      <h1 class="page-title">📬 Contact Us</h1>
+      <div class="card">
+        <h3 class="card-heading">Get in Touch</h3>
+        <div class="row2">
+          <div>
+            <p class="contact-label">Email</p>
+            <p class="contact-val">support@aapg.org</p>
+          </div>
+          <div>
+            <p class="contact-label">Phone</p>
+            <p class="contact-val">+91 9876 543 210</p>
+          </div>
         </div>
-        <div>
-          <p class="contact-label">Phone</p>
-          <p class="contact-val">+91 9876 543 210</p>
+        <div class="row2" style="margin-top:20px;">
+          <div>
+            <p class="contact-label">Address</p>
+            <p class="contact-val">AAPG Headquarters<br />Bhubaneswar, Odisha</p>
+          </div>
+          <div>
+            <p class="contact-label">Hours</p>
+            <p class="contact-val">Mon – Fri: 9AM – 6PM<br />Sat – Sun: Closed</p>
+          </div>
         </div>
       </div>
-      <div class="row2" style="margin-top:20px;">
-        <div>
-          <p class="contact-label">Address</p>
-          <p class="contact-val">AAPG Headquarters<br />Bhubaneswar, Odisha</p>
+      <div class="card" style="margin-top:20px;">
+        <h3 class="card-heading">Send us a Message</h3>
+        <div class="row2">
+          <div class="form-group">
+            <label>Your Name</label>
+            <input id="ct-name" type="text" placeholder="Your full name" />
+          </div>
+          <div class="form-group">
+            <label>Your Email</label>
+            <input id="ct-email" type="email" placeholder="your@email.com" />
+          </div>
         </div>
-        <div>
-          <p class="contact-label">Hours</p>
-          <p class="contact-val">Mon – Fri: 9AM – 6PM<br />Sat – Sun: Closed</p>
+        <div class="form-group">
+          <label>Subject</label>
+          <input id="ct-subject" type="text" placeholder="What's this about?" />
         </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="ct-message" placeholder="Write your message..."></textarea>
+        </div>
+        <button class="btn-green" onclick="submitContact()">📤 Send Message</button>
       </div>
     </div>
-    <div class="card" style="margin-top:20px;">
-      <h3 class="card-heading">Send us a Message</h3>
-      <div class="row2">
-        <div class="form-group">
-          <label>Your Name</label>
-          <input id="ct-name" type="text" placeholder="Your full name" />
-        </div>
-        <div class="form-group">
-          <label>Your Email</label>
-          <input id="ct-email" type="email" placeholder="your@email.com" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Subject</label>
-        <input id="ct-subject" type="text" placeholder="What's this about?" />
-      </div>
-      <div class="form-group">
-        <label>Message</label>
-        <textarea id="ct-message" placeholder="Write your message..."></textarea>
-      </div>
-      <button class="btn-green" onclick="submitContact()">📤 Send Message</button>
-    </div>
-  </div>
 
   </div><!-- end #app -->
 
   <!-- Switch Account Modal -->
 
 
-<!-- PREMIUM MORE PAGE -->
-<div class="page" id="page-more">
+  <!-- PREMIUM MORE PAGE -->
+  <div class="page" id="page-more">
     <h1 class="page-title">⚙️ Tools & Settings</h1>
     <div class="more-grid">
-        <div class="more-card" onclick="openModal('export-modal')">
-            <div class="more-card-icon">📊</div>
-            <h3>Export Report</h3>
-            <p>Download data as Excel, PDF, Word, or CSV</p>
-        </div>
-        <div class="more-card" onclick="openModal('backup-modal')">
-            <div class="more-card-icon">💾</div>
-            <h3>Backup & Restore</h3>
-            <p>Save your data safely or restore from a file</p>
-        </div>
-        <div class="more-card" onclick="openModal('passkey-modal')">
-            <div class="more-card-icon">🔑</div>
-            <h3>Set Quick Passkey</h3>
-            <p>Create your own code to login without OTP</p>
-        </div>
-        <div class="more-card" onclick="shareApp()">
-            <div class="more-card-icon">🚀</div>
-            <h3>Recommend App</h3>
-            <p>Share via WhatsApp, Message, Telegram, etc.</p>
-        </div>
+      <div class="more-card" onclick="openModal('export-modal')">
+        <div class="more-card-icon">📊</div>
+        <h3>Export Report</h3>
+        <p>Download data as Excel, PDF, Word, or CSV</p>
+      </div>
+      <div class="more-card" onclick="openModal('backup-modal')">
+        <div class="more-card-icon">💾</div>
+        <h3>Backup & Restore</h3>
+        <p>Save your data safely or restore from a file</p>
+      </div>
+      <div class="more-card" onclick="openModal('passkey-modal')">
+        <div class="more-card-icon">🔑</div>
+        <h3>Set Quick Passkey</h3>
+        <p>Create your own code to login without OTP</p>
+      </div>
+      <div class="more-card" onclick="shareApp()">
+        <div class="more-card-icon">🚀</div>
+        <h3>Recommend App</h3>
+        <p>Share via WhatsApp, Message, Telegram, etc.</p>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- PASSKEY MODAL (USER DEFINED) -->
-<div class="modal-overlay" id="passkey-modal" style="display:none;">
+  <!-- PASSKEY MODAL (USER DEFINED) -->
+  <div class="modal-overlay" id="passkey-modal" style="display:none;">
     <div class="modal-box" style="max-width:400px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 class="card-heading" style="margin:0;">🔑 Set Quick Passkey</h3>
-            <button onclick="closeModal('passkey-modal')" class="modal-close-btn">✕</button>
-        </div>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">Create your own secret code. Use this on the login screen to skip the OTP step.</p>
-        <div class="form-group">
-            <label>Enter New Passkey</label>
-            <input type="text" id="new-passkey-input" placeholder="e.g., 1234, mycode, etc." maxlength="20" style="text-align:center; font-size:1.2rem; letter-spacing:4px; font-weight:700;">
-        </div>
-        <button class="btn-green" onclick="savePasskey()">💾 Save Passkey</button>
-        <div style="text-align:center; margin-top:14px;">
-            <button class="btn-outline" style="color:#ef4444; border-color:#ef4444;" onclick="removePasskey()">Remove Passkey</button>
-        </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 class="card-heading" style="margin:0;">🔑 Set Quick Passkey</h3>
+        <button onclick="closeModal('passkey-modal')" class="modal-close-btn">✕</button>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">Create your own secret code. Use this
+        on the login screen to skip the OTP step.</p>
+      <div class="form-group">
+        <label>Enter New Passkey</label>
+        <input type="text" id="new-passkey-input" placeholder="e.g., 1234, mycode, etc." maxlength="20"
+          style="text-align:center; font-size:1.2rem; letter-spacing:4px; font-weight:700;">
+      </div>
+      <button class="btn-green" onclick="savePasskey()">💾 Save Passkey</button>
+      <div style="text-align:center; margin-top:14px;">
+        <button class="btn-outline" style="color:#ef4444; border-color:#ef4444;" onclick="removePasskey()">Remove
+          Passkey</button>
+      </div>
     </div>
-</div>
+  </div>
 
   <!-- PASSKEY MODAL -->
   <div class="modal-overlay" id="passkey-modal" style="display:none;">
