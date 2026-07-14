@@ -518,7 +518,8 @@ function renderLast7Days() {
 
 function renderDashCatChart() {
   const canvas = document.getElementById('dashCatChart');
-  if (!canvas || canvas.offsetParent === null) return; // not visible, skip drawing
+  const chartWrap = canvas?.parentElement;
+  if (!canvas) return;
 
   const cats = {};
   expenses.forEach(e => cats[e.cat] = (cats[e.cat] || 0) + e.amount);
@@ -527,30 +528,46 @@ function renderDashCatChart() {
 
   if (!keys.length) {
     msg.style.display = 'block';
-    canvas.style.display = 'none';
+    if (chartWrap) chartWrap.style.display = 'none';
     document.getElementById('cat-legend').innerHTML = '';
     if (window._dashPieChart) { window._dashPieChart.destroy(); window._dashPieChart = null; }
     return;
   }
 
   msg.style.display = 'none';
-  canvas.style.display = 'block';
+  if (chartWrap) chartWrap.style.display = 'block';
   if (window._dashPieChart) { window._dashPieChart.destroy(); window._dashPieChart = null; }
 
-  window._dashPieChart = new Chart(canvas, {
-    type: 'doughnut',
-    data: {
-      labels: keys,
-      datasets: [{ data: keys.map(k => cats[k]), backgroundColor: keys.map(k => COLORS[k] || '#6b7280'), borderWidth: 2 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, cutout: '40%' }
-  });
+  canvas.style.display = 'block';
 
-  document.getElementById('cat-legend').innerHTML = keys.map(k => `
-    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px; font-size:0.82rem;">
-      <div style="width:10px; height:10px; border-radius:50%; background:${COLORS[k] || '#6b7280'}"></div>
-      <span>${k}: ${formatINRShort(cats[k])}</span>
-    </div>`).join('');
+  setTimeout(() => {
+    window._dashPieChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: keys,
+        datasets: [{
+          data: keys.map(k => cats[k]),
+          backgroundColor: keys.map(k => COLORS[k] || '#6b7280'),
+          borderWidth: 2,
+          hoverBorderWidth: 3,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        cutout: '40%',
+        animation: { animateRotate: true, animateScale: true }
+      }
+    });
+
+    document.getElementById('cat-legend').innerHTML = keys.map(k => `
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px; font-size:0.82rem;">
+        <div style="width:10px; height:10px; border-radius:50%; background:${COLORS[k] || '#6b7280'}; flex-shrink:0;"></div>
+        <span>${k}: ${formatINRShort(cats[k])}</span>
+      </div>`).join('');
+  }, 100);
 }
 
 // ══════════════════════════════════════════════════════
