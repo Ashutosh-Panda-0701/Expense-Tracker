@@ -430,15 +430,16 @@ function _renderAll() {
   if (document.getElementById('last7days')) renderLast7Days();
   if (document.getElementById('expense-list')) renderExpenseList();
 
-  if (activePage === 'page-dashboard' && document.getElementById('dashCatChart')) {
-    renderDashCatChart();
+  if (activePage === 'page-dashboard') {
+    setTimeout(() => {
+      renderDashCatChart();
+    }, 100);
   }
   if (activePage === 'page-stats') renderStats();
   if (activePage === 'page-calendar') renderCalendar();
   if (activePage === 'page-feedback') renderFeedbackSummary();
   if (activePage === 'page-payments') renderPayments();
 }
-
 // ── Navigation ───────────────────────────────────────────
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -518,56 +519,62 @@ function renderLast7Days() {
 
 function renderDashCatChart() {
   const canvas = document.getElementById('dashCatChart');
-  const chartWrap = canvas?.parentElement;
-  if (!canvas) return;
+  const msg = document.getElementById('no-cat-msg');
+
+  if (!canvas) {
+    console.error('Canvas element not found!');
+    return;
+  }
 
   const cats = {};
   expenses.forEach(e => cats[e.cat] = (cats[e.cat] || 0) + e.amount);
   const keys = Object.keys(cats);
-  const msg = document.getElementById('no-cat-msg');
 
   if (!keys.length) {
     msg.style.display = 'block';
-    if (chartWrap) chartWrap.style.display = 'none';
+    canvas.style.display = 'none';
     document.getElementById('cat-legend').innerHTML = '';
     if (window._dashPieChart) { window._dashPieChart.destroy(); window._dashPieChart = null; }
     return;
   }
 
   msg.style.display = 'none';
-  if (chartWrap) chartWrap.style.display = 'block';
-  if (window._dashPieChart) { window._dashPieChart.destroy(); window._dashPieChart = null; }
-
   canvas.style.display = 'block';
 
-  setTimeout(() => {
-    window._dashPieChart = new Chart(canvas, {
-      type: 'doughnut',
-      data: {
-        labels: keys,
-        datasets: [{
-          data: keys.map(k => cats[k]),
-          backgroundColor: keys.map(k => COLORS[k] || '#6b7280'),
-          borderWidth: 2,
-          hoverBorderWidth: 3,
-          hoverOffset: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        cutout: '40%',
-        animation: { animateRotate: true, animateScale: true }
-      }
-    });
+  if (window._dashPieChart) {
+    window._dashPieChart.destroy();
+    window._dashPieChart = null;
+  }
 
-    document.getElementById('cat-legend').innerHTML = keys.map(k => `
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px; font-size:0.82rem;">
-        <div style="width:10px; height:10px; border-radius:50%; background:${COLORS[k] || '#6b7280'}; flex-shrink:0;"></div>
-        <span>${k}: ${formatINRShort(cats[k])}</span>
-      </div>`).join('');
-  }, 100);
+  requestAnimationFrame(() => {
+    try {
+      window._dashPieChart = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: keys,
+          datasets: [{
+            data: keys.map(k => cats[k]),
+            backgroundColor: keys.map(k => COLORS[k] || '#6b7280'),
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          cutout: '40%'
+        }
+      });
+
+      document.getElementById('cat-legend').innerHTML = keys.map(k => `
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px; font-size:0.82rem;">
+          <div style="width:10px; height:10px; border-radius:50%; background:${COLORS[k] || '#6b7280'}"></div>
+          <span>${k}: ${formatINRShort(cats[k])}</span>
+        </div>`).join('');
+    } catch (error) {
+      console.error('Chart creation error:', error);
+    }
+  });
 }
 
 // ══════════════════════════════════════════════════════

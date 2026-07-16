@@ -772,7 +772,15 @@ textarea {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
+    height: 250px;
+    position: relative;
+}
+
+.cat-chart-wrap canvas {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 250px !important;
+    height: auto !important;
 }
 
 .dash-grid {
