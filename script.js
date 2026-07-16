@@ -441,18 +441,6 @@ function _renderAll() {
   if (activePage === 'page-payments') renderPayments();
 }
 // ── Navigation ───────────────────────────────────────────
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(a => a.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  const navEl = document.getElementById('nav-' + page);
-  if (navEl) navEl.classList.add('active');
-
-  if (page === 'stats') setTimeout(renderStats, 50); // let the canvas size settle before drawing
-  if (page === 'calendar') renderCalendar();
-  if (page === 'accounts') updateAccountsPage();
-  if (page === 'payments') renderPayments();
-}
 
 // ── Expenses ─────────────────────────────────────────────
 function saveExpenses() {
@@ -577,6 +565,20 @@ function renderDashCatChart() {
       console.error('Chart creation error:', error);
     }
   });
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
+
+  if (page === 'dashboard') setTimeout(renderDashCatChart, 100);
+  if (page === 'stats') setTimeout(renderStats, 50); // let the canvas size settle before drawing
+  if (page === 'calendar') renderCalendar();
+  if (page === 'accounts') updateAccountsPage();
+  if (page === 'payments') renderPayments();
 }
 
 // ══════════════════════════════════════════════════════
