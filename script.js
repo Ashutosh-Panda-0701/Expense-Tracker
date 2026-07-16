@@ -183,7 +183,7 @@ function initPasswordRequirements() {
     <div class="password-strength-text" id="strength-text"></div>
   `;
 
-  passInput.addEventListener('input', function() {
+  passInput.addEventListener('input', function () {
     const pw = this.value;
     const v = validatePassword(pw);
     for (const [key, result] of Object.entries(v.rules)) {
@@ -231,7 +231,7 @@ function doSignUp() {
 
   if (!name || !username || !email || !pass || !confirm) return showError(errEl, 'Please fill in all required fields.');
   if (pass !== confirm) return showError(errEl, 'Passwords do not match.');
-    const passCheck = validatePassword(pass);
+  const passCheck = validatePassword(pass);
   if (!passCheck.isValid) {
     const missing = Object.values(passCheck.rules).filter(r => !r.valid).map(r => r.message);
     return showError(errEl, 'Password: ' + missing.join(', '));
@@ -540,6 +540,8 @@ function renderDashCatChart() {
 
   msg.style.display = 'none';
   canvas.style.display = 'block';
+  canvas.width = 250;
+  canvas.height = 250;
 
   if (window._dashPieChart) {
     window._dashPieChart.destroy();
@@ -559,7 +561,7 @@ function renderDashCatChart() {
           }]
         },
         options: {
-          responsive: true,
+          responsive: false,
           maintainAspectRatio: true,
           plugins: { legend: { display: false } },
           cutout: '40%'
@@ -1028,7 +1030,7 @@ function parseUPISMS() {
   }
 
   document.getElementById('pay-sms-parser').value = '';
-  
+
   if (amount || txnId || merchant) {
     alert(`✅ Smart Parser Success!\n\n• Amount: ₹${amount || 'N/A'}\n• TXN ID: ${txnId || 'N/A'}\n• Merchant: ${merchant || 'N/A'}\n\nPlease select a Category and click Save.`);
   } else {
@@ -1164,184 +1166,184 @@ function scheduleNightReminder() {
 //  MORE MENU, MODALS & HELP
 // ══════════════════════════════════════════════════════
 function toggleMoreMenu() {
-    document.getElementById('more-dropdown').classList.toggle('active');
+  document.getElementById('more-dropdown').classList.toggle('active');
 }
 function closeMoreMenu() {
-    document.getElementById('more-dropdown').classList.remove('active');
+  document.getElementById('more-dropdown').classList.remove('active');
 }
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
 // Close dropdown if clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.more-menu-wrap')) closeMoreMenu();
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('.more-menu-wrap')) closeMoreMenu();
 });
 
 // ══════════════════════════════════════════════════════
 //  EXPORT REPORTS
 // ══════════════════════════════════════════════════════
 function getExportData() {
-    const period = document.getElementById('export-period').value;
-    const now = new Date();
-    let filtered = [];
-    
-    if (period === 'weekly') {
-        const start = new Date(now); start.setDate(now.getDate() - 6); start.setHours(0,0,0,0);
-        const end = new Date(now); end.setHours(23,59,59,999);
-        filtered = expenses.filter(e => { const d = new Date(e.date); return d >= start && d <= end; });
-    } else if (period === 'monthly') {
-        filtered = expenses.filter(e => { const d = new Date(e.date); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); });
-    } else {
-        filtered = expenses.filter(e => new Date(e.date).getFullYear() === now.getFullYear());
-    }
-    return filtered.map(e => ({ Date: e.date, Description: e.desc, Category: e.cat, Amount: e.amount }));
+  const period = document.getElementById('export-period').value;
+  const now = new Date();
+  let filtered = [];
+
+  if (period === 'weekly') {
+    const start = new Date(now); start.setDate(now.getDate() - 6); start.setHours(0, 0, 0, 0);
+    const end = new Date(now); end.setHours(23, 59, 59, 999);
+    filtered = expenses.filter(e => { const d = new Date(e.date); return d >= start && d <= end; });
+  } else if (period === 'monthly') {
+    filtered = expenses.filter(e => { const d = new Date(e.date); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); });
+  } else {
+    filtered = expenses.filter(e => new Date(e.date).getFullYear() === now.getFullYear());
+  }
+  return filtered.map(e => ({ Date: e.date, Description: e.desc, Category: e.cat, Amount: e.amount }));
 }
 
 function exportData(type) {
-    const data = getExportData();
-    if (!data.length) { alert('No expenses found for this period.'); return; }
-    const user = getCurrentUser();
-    const fileName = `AAPG_Expense_Report_${new Date().toISOString().split('T')[0]}`;
+  const data = getExportData();
+  if (!data.length) { alert('No expenses found for this period.'); return; }
+  const user = getCurrentUser();
+  const fileName = `AAPG_Expense_Report_${new Date().toISOString().split('T')[0]}`;
 
-    if (type === 'excel') {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Expenses");
-        XLSX.writeFile(wb, `${fileName}.xlsx`);
-    } 
-    else if (type === 'csv') {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${fileName}.csv`; link.click();
-    } 
-    else if (type === 'pdf') {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFontSize(16); doc.text(`Expense Report - ${user.name}`, 14, 20);
-        doc.setFontSize(10); doc.setTextColor(100); doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
-        doc.autoTable({ startY: 35, head: [['Date', 'Description', 'Category', 'Amount']], body: data.map(e => [e.Date, e.Description, e.Category, '₹' + e.amount]) });
-        doc.save(`${fileName}.pdf`);
-    } 
-    else if (type === 'word') {
-        let tableHtml = `<table border="1" style="border-collapse:collapse; width:100%; font-family:sans-serif;"><tr style="background:#22c55e;color:#fff;"><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>`;
-        data.forEach(e => { tableHtml += `<tr><td>${e.Date}</td><td>${e.Description}</td><td>${e.Category}</td><td>₹${e.amount}</td></tr>`; });
-        tableHtml += `</table>`;
-        const html = `<html><head><meta charset="utf-8"><title>Report</title></head><body><h2>Expense Report - ${user.name}</h2><p>Generated: ${new Date().toLocaleString()}</p>${tableHtml}</body></html>`;
-        const blob = new Blob(['\ufeff', html], { type: "application/msword" });
-        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${fileName}.doc`; link.click();
-    }
-    closeModal('export-modal');
-    alert(`✅ ${type.toUpperCase()} report downloaded successfully!`);
+  if (type === 'excel') {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+    XLSX.writeFile(wb, `${fileName}.xlsx`);
+  }
+  else if (type === 'csv') {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${fileName}.csv`; link.click();
+  }
+  else if (type === 'pdf') {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(16); doc.text(`Expense Report - ${user.name}`, 14, 20);
+    doc.setFontSize(10); doc.setTextColor(100); doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+    doc.autoTable({ startY: 35, head: [['Date', 'Description', 'Category', 'Amount']], body: data.map(e => [e.Date, e.Description, e.Category, '₹' + e.amount]) });
+    doc.save(`${fileName}.pdf`);
+  }
+  else if (type === 'word') {
+    let tableHtml = `<table border="1" style="border-collapse:collapse; width:100%; font-family:sans-serif;"><tr style="background:#22c55e;color:#fff;"><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>`;
+    data.forEach(e => { tableHtml += `<tr><td>${e.Date}</td><td>${e.Description}</td><td>${e.Category}</td><td>₹${e.amount}</td></tr>`; });
+    tableHtml += `</table>`;
+    const html = `<html><head><meta charset="utf-8"><title>Report</title></head><body><h2>Expense Report - ${user.name}</h2><p>Generated: ${new Date().toLocaleString()}</p>${tableHtml}</body></html>`;
+    const blob = new Blob(['\ufeff', html], { type: "application/msword" });
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${fileName}.doc`; link.click();
+  }
+  closeModal('export-modal');
+  alert(`✅ ${type.toUpperCase()} report downloaded successfully!`);
 }
 
 // ══════════════════════════════════════════════════════
 //  BACKUP & RESTORE
 // ══════════════════════════════════════════════════════
 function downloadBackup() {
-    const backupData = {};
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('ps_') || key === 'aapg-theme') {
-            backupData[key] = localStorage.getItem(key);
-        }
+  const backupData = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('ps_') || key === 'aapg-theme') {
+      backupData[key] = localStorage.getItem(key);
     }
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
-    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); 
-    link.download = `AAPG_Backup_${new Date().toISOString().split('T')[0]}.json`; link.click();
-    alert('✅ Backup downloaded successfully! Keep this file safe.');
+  }
+  const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+  const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+  link.download = `AAPG_Backup_${new Date().toISOString().split('T')[0]}.json`; link.click();
+  alert('✅ Backup downloaded successfully! Keep this file safe.');
 }
 
 function restoreBackup() {
-    const fileInput = document.getElementById('restore-file-input');
-    if (!fileInput.files.length) { alert('Please select a backup file first.'); return; }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            if (confirm('⚠️ This will overwrite all your current data. Are you sure?')) {
-                // Clear old ps_ data
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key.startsWith('ps_')) keysToRemove.push(key);
-                }
-                keysToRemove.forEach(k => localStorage.removeItem(k));
-                
-                // Restore new data
-                for (const key in data) { localStorage.setItem(key, data[key]); }
-                alert('✅ Data restored successfully! The page will reload now.');
-                location.reload();
-            }
-        } catch (err) {
-            alert('❌ Invalid backup file.');
+  const fileInput = document.getElementById('restore-file-input');
+  if (!fileInput.files.length) { alert('Please select a backup file first.'); return; }
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (confirm('⚠️ This will overwrite all your current data. Are you sure?')) {
+        // Clear old ps_ data
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key.startsWith('ps_')) keysToRemove.push(key);
         }
-    };
-    reader.readAsText(fileInput.files[0]);
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+
+        // Restore new data
+        for (const key in data) { localStorage.setItem(key, data[key]); }
+        alert('✅ Data restored successfully! The page will reload now.');
+        location.reload();
+      }
+    } catch (err) {
+      alert('❌ Invalid backup file.');
+    }
+  };
+  reader.readAsText(fileInput.files[0]);
 }
 
 // ══════════════════════════════════════════════════════
 //  PASSKEY SYSTEM
 // ══════════════════════════════════════════════════════
 function savePasskey() {
-    const user = getCurrentUser();
-    if (!user) return;
-    const newPasskey = document.getElementById('new-passkey-input').value.trim();
-    if (!newPasskey || newPasskey.length < 4) {
-        alert('Passkey must be at least 4 characters.');
-        return;
-    }
-    
-    user.passkey = newPasskey;
-    const users = getAllUsers();
-    const idx = users.findIndex(u => u.id === user.id);
-    if (idx !== -1) { users[idx].passkey = newPasskey; saveAllUsers(users); }
-    
-    document.getElementById('new-passkey-input').value = '';
-    closeModal('passkey-modal');
-    alert(`✅ Passkey saved! You can now use "${newPasskey}" on the login screen to login directly without OTP.`);
+  const user = getCurrentUser();
+  if (!user) return;
+  const newPasskey = document.getElementById('new-passkey-input').value.trim();
+  if (!newPasskey || newPasskey.length < 4) {
+    alert('Passkey must be at least 4 characters.');
+    return;
+  }
+
+  user.passkey = newPasskey;
+  const users = getAllUsers();
+  const idx = users.findIndex(u => u.id === user.id);
+  if (idx !== -1) { users[idx].passkey = newPasskey; saveAllUsers(users); }
+
+  document.getElementById('new-passkey-input').value = '';
+  closeModal('passkey-modal');
+  alert(`✅ Passkey saved! You can now use "${newPasskey}" on the login screen to login directly without OTP.`);
 }
 
 function removePasskey() {
-    if (!confirm('Are you sure you want to remove your quick login passkey?')) return;
-    const user = getCurrentUser();
-    if (!user) return;
-    user.passkey = null;
-    const users = getAllUsers();
-    const idx = users.findIndex(u => u.id === user.id);
-    if (idx !== -1) { users[idx].passkey = null; saveAllUsers(users); }
-    document.getElementById('new-passkey-input').value = '';
-    alert('✅ Passkey removed successfully.');
+  if (!confirm('Are you sure you want to remove your quick login passkey?')) return;
+  const user = getCurrentUser();
+  if (!user) return;
+  user.passkey = null;
+  const users = getAllUsers();
+  const idx = users.findIndex(u => u.id === user.id);
+  if (idx !== -1) { users[idx].passkey = null; saveAllUsers(users); }
+  document.getElementById('new-passkey-input').value = '';
+  alert('✅ Passkey removed successfully.');
 }
 
 function shareApp() {
-    const shareText = "Check out this amazing Expense Tracker by AAPG Public Service! Track your daily finances easily.";
-    const shareUrl = window.location.href;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'AAPG Expense Tracker',
-            text: shareText,
-            url: shareUrl
-        }).catch(err => console.log('Error sharing:', err));
-    } else {
-        // Fallback for browsers that don't support Web Share API (like Desktop Chrome)
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
-        window.open(whatsappUrl, '_blank');
-    }
+  const shareText = "Check out this amazing Expense Tracker by AAPG Public Service! Track your daily finances easily.";
+  const shareUrl = window.location.href;
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'AAPG Expense Tracker',
+      text: shareText,
+      url: shareUrl
+    }).catch(err => console.log('Error sharing:', err));
+  } else {
+    // Fallback for browsers that don't support Web Share API (like Desktop Chrome)
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+    window.open(whatsappUrl, '_blank');
+  }
 }
 
 function loginWithPasskey() {
-    const passkey = prompt('Enter your 6-digit Passkey:');
-    if (passkey === null) return;
-    if (passkey.length !== 6) return alert('Passkey must be exactly 6 digits.');
-    
-    const users = getAllUsers();
-    const user = users.find(u => u.passkey === passkey);
-    if (!user) return alert('Incorrect Passkey.');
-    
-    // DIRECT LOGIN - NO OTP REQUIRED
-    loginAs(user);
+  const passkey = prompt('Enter your 6-digit Passkey:');
+  if (passkey === null) return;
+  if (passkey.length !== 6) return alert('Passkey must be exactly 6 digits.');
+
+  const users = getAllUsers();
+  const user = users.find(u => u.passkey === passkey);
+  if (!user) return alert('Incorrect Passkey.');
+
+  // DIRECT LOGIN - NO OTP REQUIRED
+  loginAs(user);
 }
 
 
